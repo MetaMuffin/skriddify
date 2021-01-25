@@ -34,6 +34,13 @@ def parse_expr(x):
     else:
         error_type(x)
 
+def parse_alias(x):
+    if x.asname == None:
+        x.asname = x.name
+
+    make_name(x.name)
+    x.asname = names[x.name]
+
 def parse_stmt(x):
     if type(x) in { ast.Pass, type(None) }:
         pass
@@ -66,8 +73,9 @@ def parse_stmt(x):
         for t in x.targets:
             parse_expr(t)
 
-    elif type(x) == ast.Import:
-        error_type(x)
+    elif type(x) in { ast.Import, ast.ImportFrom }:
+        for a in x.names:
+            parse_alias(a)
 
     else:
         error_type(x)

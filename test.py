@@ -1,7 +1,7 @@
-#def kekfunktion(test):
-#    c = test
-#    return c + 1
-#
+import z, y
+
+from h import kek, kekek
+
 a = 1
 b = a
 a += 1
