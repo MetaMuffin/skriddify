@@ -88,6 +88,69 @@ def parse_stmt(x):
         for a in x.names:
             parse_alias(a)
 
+    elif type(x) == ast.If:
+        parse_expr(x.test)
+
+        for stmt in x.body:
+            parse_stmt(stmt)
+
+        for stmt in x.orelse:
+            parse_stmt(stmt)
+
+    elif type(x) in { ast.For, ast.AsyncFor }:
+        parse_expr(x.target)
+        parse_expr(x.iter)
+
+        for stmt in x.body:
+            parse_stmt(stmt)
+
+    elif type(x) == ast.While:
+        parse_expr(x.test)
+
+        for stmt in x.body:
+            parse_stmt(stmt)
+
+        for stmt in x.orelse:
+            parse_stmt(stmt)
+
+    elif type(x) in { ast.Break, ast.Continue }:
+        pass
+
+    elif type(x) == ast.Try:
+        for stmt in x.body:
+            parse_stmt(stmt)
+
+        for handler in x.handlers:
+            if not handler.name == None:
+                make_var_name(handler.name)
+                handler.name = names[handler.name]
+
+            for stmt in handler.body:
+                parse_stmt(stmt)
+
+        for stmt in x.orelse:
+            parse_stmt(stmt)
+
+        for stmt in x.finalbody:
+            parse_stmt(stmt)
+
+    elif type(x) in { ast.With, ast.AsyncWith }:
+        for item in x.items:
+            parse_expr(item.context_expr)
+            parse_expr(item.optional_vars)
+
+        for stmt in x.body:
+            parse_stmt(stmt)
+
+    elif type(x) in { ast.Global, ast.Nonlocal }:
+        for name in x.names:
+            make_var_name(name)
+
+        x.names = [names[name] for name in x.names]
+
+    elif type(x) == ast.Return:
+        parse_expr(x.value)
+
     else:
         error_type(x)
 
@@ -109,10 +172,10 @@ def check_implemented(s):
     for x in s:
         try:
             parse_thing(x())
-    
+
         except NotImplementedError as e:
             print(e)
-    
+
         except Exception:
             pass
 
@@ -126,11 +189,11 @@ print()
 if __name__ == "__main__":
     try:
         p = ast.parse(open(sys.argv[1]).read())
-    
+
     except Exception as e:
         print("Error during parsing:", str(e))
         sys.exit(1)
-    
+
     parse_body(p.body)
-    
+
     print(ast.unparse(p))
