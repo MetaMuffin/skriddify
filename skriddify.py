@@ -17,7 +17,7 @@ gen_class = unique_names("class")
 def make_name(name, gen=gen_obj):
     if name in predefined_vars:
         names[name] = name
-    if not name in names:
+    elif not name in names:
         names[name] = next(gen)
 
 def make_var_name(name):
@@ -27,7 +27,8 @@ def make_var_name(name):
         make_name(name, gen_obj)
 
 def error_type(x):
-    raise NotImplementedError("%s with body: %s" % (str(type(x)), ast.dump(x)))
+    raise NotImplementedError("%s with body: %s" % \
+            (str(type(x)), ast.dump(x, indent=4)))
 
 stmt_types = { ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Return, ast.Delete, ast.Assign, ast.AugAssign, ast.AnnAssign, ast.For, ast.AsyncFor, ast.While, ast.If, ast.With, ast.AsyncWith, ast.Raise, ast.Try, ast.Assert, ast.Import, ast.ImportFrom, ast.Global, ast.Nonlocal, ast.Expr, ast.Pass, ast.Break, ast.Continue }
 
@@ -53,6 +54,29 @@ def parse_alias(x):
 
     make_name(x.name, gen_obj)
     x.asname = names[x.name]
+
+def parse_func(x):
+    make_name(x.name, gen_func)
+    x.name = names[x.name]
+    parse_expr(x.returns)
+
+    for stmt in x.body:
+        parse_stmt(stmt)
+
+    a = x.args
+    for arg in a.posonlyargs + a.args + a.kwonlyargs + [a.vararg] + [a.kwarg]:
+        if arg == None:
+            continue
+
+        make_var_name(arg.arg)
+        arg.arg = names[arg.arg]
+        parse_expr(arg.annotation)
+
+    for defarg in a.defaults + a.kw_defaults:
+        parse_expr(defarg)
+
+    for dec in x.decorator_list:
+        parse_expr(dec)
 
 def parse_stmt(x):
     if type(x) in { ast.Pass, type(None) }:
@@ -152,6 +176,9 @@ def parse_stmt(x):
 
     elif type(x) == ast.Return:
         parse_expr(x.value)
+
+    elif type(x) in { ast.FunctionDef, ast.AsyncFunctionDef }:
+        parse_func(x)
 
     else:
         error_type(x)
