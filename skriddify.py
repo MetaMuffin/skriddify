@@ -1,5 +1,5 @@
 import ast, sys
-
+from predefined_vars import var_names as predefined_vars
 from skriddie_vars import unique_names
 
 def skriddie():
@@ -15,6 +15,8 @@ gen_short = unique_names("var_short")
 gen_class = unique_names("class")
 
 def make_name(name, gen=gen_obj):
+    if name in predefined_vars:
+        names[name] = name
     if not name in names:
         names[name] = next(gen)
 
