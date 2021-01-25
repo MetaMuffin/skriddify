@@ -40,7 +40,19 @@ syntax = {
     ]
 }
 
+# generator function for unique name, so you dont need to track used ones.
+def unique_names(ty):
+    used = {}
+    while True:
+        yield single_unique_name(used,ty)
 
+def single_unique_name(used,ty):
+    # TODO make this code more efficient
+    name = single_name(ty)
+    while name in used: name = single_name(ty)
+    return name
+
+# generate parts of a variable name as a list
 def parts_for(ty):
     st = syntax[ty]
     parts = []
@@ -54,7 +66,7 @@ def parts_for(ty):
                 parts.append(random_element(ps[1]))
     return parts
 
-
+# remove duplicates from the variable parts
 def post_processs_parts(parts):
     seen = {}
     parts_post = []
@@ -66,7 +78,7 @@ def post_processs_parts(parts):
             parts_post.append(p)
     return parts_post
 
-
+# create a single random variable name
 def single_name(ty):
     parts = []
     for x in parts_for(ty):
@@ -77,7 +89,7 @@ def single_name(ty):
         return camelCase(parts)
     return "_".join(parts)
 
-
+# converts parts to camel case
 def camelCase(parts):
     o = ""
     for p in parts:
