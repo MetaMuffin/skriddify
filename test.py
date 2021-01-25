@@ -16,3 +16,5 @@ del b
 pass
 
 c
+
+asdfdasd = "5"

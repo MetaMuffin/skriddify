@@ -1,5 +1,7 @@
 import ast, sys
 
+from skriddie_vars import unique_names
+
 def skriddie():
     x = 0
     while True:
@@ -7,11 +9,20 @@ def skriddie():
         yield "_" + str(x)
 
 names = {}
-generator = skriddie()
+gen_func = unique_names("func")
+gen_obj = unique_names("var_obj")
+gen_short = unique_names("var_short")
+gen_class = unique_names("class")
 
-def make_name(name):
+def make_name(name, gen=gen_obj):
     if not name in names:
-        names[name] = next(generator)
+        names[name] = next(gen)
+
+def make_var_name(name):
+    if len(name) < 4:
+        make_name(name, gen_short)
+    else:
+        make_name(name, gen_obj)
 
 def error_type(x):
     raise NotImplementedError("%s with body: %s" % (str(type(x)), ast.dump(x)))
@@ -28,7 +39,7 @@ def parse_expr(x):
         parse_expr(x.value)
 
     elif type(x) == ast.Name:
-        make_name(x.id)
+        make_var_name(x.id)
         x.id = names[x.id]
 
     else:
@@ -38,7 +49,7 @@ def parse_alias(x):
     if x.asname == None:
         x.asname = x.name
 
-    make_name(x.name)
+    make_name(x.name, gen_obj)
     x.asname = names[x.name]
 
 def parse_stmt(x):
@@ -58,7 +69,7 @@ def parse_stmt(x):
         error_type(x)
 
     elif type(x) == ast.AugAssign:
-        make_name(x.target.id)
+        make_var_name(x.target.id)
         x.target.id = names[x.target.id]
 
     elif type(x) == ast.Raise:
